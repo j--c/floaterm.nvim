@@ -15,7 +15,6 @@ local function get_float_cfg(opts)
     -- calc float size
     local width = opts.width or math.floor(ui.width * 0.8)
     local height = opts.height or math.floor(ui.height * 0.8)
-
     return {
         relative = 'editor',
         width = width,
@@ -27,7 +26,7 @@ local function get_float_cfg(opts)
     }
 end
 
-local function create_floating_terminal(opts)
+local function create_floating_win(opts)
     opts = opts or {}
 
     -- create or use existing buffer
@@ -44,13 +43,21 @@ local function create_floating_terminal(opts)
     -- create a window
     local float_win = vim.api.nvim_open_win(float_buf, true, float_cfg)
 
+    -- return buffer and window
+    return  { buf = float_buf, win = float_win }
+end
+
+local function create_floating_term(opts)
+
+    local float_win = create_floating_win(opts)
+
     -- turn it into terminal if necessary
-    if vim.bo[float_buf].buftype ~= 'terminal' then
+    if vim.bo[float_win.buf].buftype ~= 'terminal' then
         vim.cmd.terminal()
     end
 
     -- return buffer and window
-    return  { buf = float_buf, win = float_win }
+    return  { buf = float_win.buf, win = float_win.win }
 end
 
 
@@ -60,11 +67,13 @@ end
 ---------------------------
 
 -- toggle the terminal
-M.toggle = function()
+M.toggle_term = function(opts)
+    opts.buf = floaterm_state.buf
     if vim.api.nvim_win_is_valid(floaterm_state.win) then
         vim.api.nvim_win_hide(floaterm_state.win)
     else
-        floaterm_state = create_floating_terminal {buf = floaterm_state.buf}
+        opts.buf = floaterm_state.buf
+        floaterm_state = create_floating_term(opts)
     end
 end
 
